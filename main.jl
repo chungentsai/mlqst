@@ -35,12 +35,12 @@ run_alg(alg, n_epoch, n_rate) = alg(n_epoch, n_rate, io, ρ_true, N, f, ∇f, co
 try
     global results = Dict()
 
-    for alg in batch_algs
-        results[alg] = run_alg(alg, N_EPOCH_B, N_RATE_B)
-    end
-
     for alg in stochastic_algs
         results[alg] = run_alg(alg, N_EPOCH_S, N_RATE_S)
+    end
+
+    for alg in batch_algs
+        results[alg] = run_alg(alg, N_EPOCH_B, N_RATE_B)
     end
 
 finally
@@ -49,4 +49,4 @@ finally
 end
 
 
-myPlot(filename, N_EPOCH_S, N_EPOCH_B, N_RATE_S, stochastic_algs, batch_algs)
+#myPlot(filename, N_EPOCH_S, N_EPOCH_B, N_RATE_S, stochastic_algs, batch_algs)

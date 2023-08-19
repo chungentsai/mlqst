@@ -1,6 +1,6 @@
 # problem parameters
 # to change the generation of the true quantum state, please check main.jl
-const q = 2               # num qubits
+const q = 4               # num qubits
 const Q = 4               # two outcomes
 const N_EPOCH_S = 200     # num. epochs
 const N_RATE_S = 2
@@ -16,8 +16,8 @@ const d = 2 ^ q           # dimension
 
 # algorithms settings
 # implemented algorithms:
-# batch algorithms: RρR, QEM, M_FW, DA
 # stochastic algorithms: SDA, SMD, SQSB
+# batch algorithms: RρR, QEM, M_FW, DA
 
-batch_algs = [RρR, QEM, M_FW, DA]
 stochastic_algs = [SDA, SMD, SQSB]
+batch_algs = [DA, RρR, M_FW]
