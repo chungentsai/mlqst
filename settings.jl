@@ -10,7 +10,6 @@ const N_RATE_B = 1        # record values every (numEpochs ÷ rate) iteration
                           # also used in myPlot()
 
 const N = Q ^ q * 100     # sample size
-#const N = 100     # sample size
 const M = Q ^ q           # num observables
 const d = 2 ^ q           # dimension
 
@@ -20,4 +19,4 @@ const d = 2 ^ q           # dimension
 # batch algorithms: RρR, QEM, M_FW, DA
 
 stochastic_algs = [SDA, SMD, SQSB]
-batch_algs = [DA, RρR, M_FW]
+batch_algs = [DA, QEM, RρR, M_FW]

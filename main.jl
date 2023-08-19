@@ -49,4 +49,4 @@ finally
 end
 
 
-#myPlot(filename, N_EPOCH_S, N_EPOCH_B, N_RATE_S, stochastic_algs, batch_algs)
+myPlot(filename, N_EPOCH_S, N_EPOCH_B, N_RATE_S, stochastic_algs, batch_algs)

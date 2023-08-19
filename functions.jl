@@ -129,27 +129,27 @@ end
 
 
 function log_barrier_projection(
-    v::Array{Float64, 1},
+    u::Array{Float64, 1},
     ε::Float64
     )
-    # compute argmin_{x∈Δ} D_h(x,v) where h(x)=∑_{i=1}^d -log(x_i)
-    # minimize ϕ(θ) = θ - ∑_i log(θ + v_i)
+    # compute argmin_{x∈Δ} D_h(x,u) where h(x)=∑_{i=1}^d -log(x_i)
+    # minimize ϕ(θ) = θ - ∑_i log(θ + u_i^{-1})
 
-    θ::Float64 = 1 - minimum(v)
-    a::Array{Float64, 1} = 1 ./ (v .+ θ)
+    θ::Float64 = 1 - minimum(1 ./ u)
+    a::Array{Float64, 1} = 1 ./ ((1 ./ u) .+ θ)
     ∇::Float64 = 1 - sum(a)
     ∇2::Float64 = a ⋅ a
     λt::Float64 = abs(∇) / sqrt(∇2)
 
     while λt > ε
-        a = 1 ./ (v .+ θ)
+        a = 1 ./ ((1 ./ u) .+ θ)
         ∇ = 1 - norm(a, 1)
         ∇2 =  a ⋅ a
         θ = θ - ∇ / ∇2
         λt = abs(∇) / sqrt(∇2)
     end
 
-    return (1 ./ (v .+ θ))
+    return (1 ./ ((1 ./ u) .+ θ))
 end
 
 

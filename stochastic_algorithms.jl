@@ -93,8 +93,8 @@ function SMD(
         @timeit to "iteration" begin
             # update
             grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ_bar)
-            Λ::Array{Float64, 1}, U::Matrix{ComplexF64} = eigen(Hermitian(ρ_inv + η * grad))
-            Λ = log_barrier_projection(Λ, 1e-5)
+            Λ_inv::Array{Float64, 1}, U::Matrix{ComplexF64} = eigen(Hermitian(ρ_inv + η * grad))
+            Λ = log_barrier_projection(1 ./ Λ_inv, 1e-5)
             ρ = U * Diagonal(Λ) * adjoint(U)
             ρ_inv = U * Diagonal(1 ./ Λ) * adjoint(U)
 
@@ -133,14 +133,13 @@ function SDA(
     d::Int64 = size(ρ_true)[1]
     ρ_bar::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
-    σ_inv::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) * d
-    
+    ∑grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
+    ∑dual_norm2 = 0
     
     n_iter::Int64 = n_epoch * N
     period::Int64 = N ÷ n_rate
     @timeit to "iteration" begin
-        idx = rand(1:N, n_iter)
-        sum_dual_norm2 = 0
+        idx = rand(1:N, n_iter)  
     end
  
     @inbounds for iter = 1:n_iter
@@ -149,15 +148,15 @@ function SDA(
             grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ_bar)
 
             # compute learning rates
-            sum_dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
-            η = sqrt(d) / sqrt(4 * d + 1 + sum_dual_norm2)
+            ∑dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
+            η = sqrt(d) / sqrt(4 * d + 1 + ∑dual_norm2)
             
             # update step
-            Λ, U = eigen(Hermitian(σ_inv + η * grad))
-            σ_inv = U * Diagonal(Λ) * adjoint(U)
+            ∑grad += grad
+            Λ_inv, U = eigen(Hermitian(η * ∑grad))
             
             # projection step
-            Λ = log_barrier_projection(Λ, 1e-5)
+            Λ = log_barrier_projection(1 ./ Λ_inv, 1e-5)
             ρ = U * Diagonal(Λ) * adjoint(U)
 
             ρ_bar = (iter * ρ_bar + ρ) / (iter + 1.0)

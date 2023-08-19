@@ -11,7 +11,7 @@ function myPlot(filename, n_epoch_s, n_epoch_b, n_rate_s, stochastic_algs, batch
     A = readdlm(filename, '\t', Float64, '\n')
 
     approxOpt = minimum(A[:, 4])
-    algs = vcat(stochastic_algs, stochastic_algs)
+    algs = vcat(stochastic_algs, batch_algs)
     label = string.(algs)
     results = Dict()
 

@@ -160,25 +160,25 @@ function DA(
     d::Int64 = size(ρ_true)[1]
     ρ_bar = Matrix{ComplexF64}(I, d, d) / d
     ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
-    σ_inv::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) * d
-    sum_dual_norm2 = 0
+    ∑grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
+    ∑dual_norm2 = 0
     
     @timeit to "iteration" λ = compute_λ(ρ_bar)
 
     @inbounds for t = 1: n_epoch
-
         # update iterate
         @timeit to "iteration" begin
+            # compute learning rates
             grad = ∇f(λ)
-            sum_dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
-            η = sqrt(d) / sqrt(4 * d + 1 + sum_dual_norm2)
-
+            ∑dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
+            η = sqrt(d) / sqrt(4 * d + 1 + ∑dual_norm2)
+            
             # update step
-            Λ, U = eigen(Hermitian(σ_inv + η * grad))
-            σ_inv = U * Diagonal(Λ) * adjoint(U)
-
+            ∑grad += grad
+            Λ_inv, U = eigen(Hermitian(η * ∑grad))
+            
             # projection step
-            Λ = log_barrier_projection(Λ, 1e-5)
+            Λ = log_barrier_projection(1 ./ Λ_inv, 1e-5)
             ρ = U * Diagonal(Λ) * adjoint(U)
 
             # averaging step
