@@ -1,3 +1,5 @@
+include("./myplot.jl")
+
 using MKL
 using TimerOutputs;
 using Random
@@ -29,7 +31,7 @@ end
 
 ∇f(λ) = ∇f(data, λ)
 compute_λ(ρ) = compute_λ(data, ρ)
-run_alg(alg, n_epoch, n_rate) = alg(n_epoch, n_rate, io, ρ_true, N, f, ∇f, compute_λ)
+run_alg(alg, n_epoch, n_rate) = alg(n_epoch, n_rate, io, ρ_true, N, f, ∇f, compute_λ, VERBOSE)
 
 
 try
@@ -49,4 +51,4 @@ finally
 end
 
 
-myPlot(filename, N_EPOCH_S, N_EPOCH_B, N_RATE_S, stochastic_algs, batch_algs)
+myPlot(filename)

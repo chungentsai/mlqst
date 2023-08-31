@@ -13,14 +13,16 @@ function SQSB(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
 
     # C.-M. Lin, Y.-M. Hsu, and Y.-H. Li, Maximum-likelihood quantum state tomography by Soft-Bayes, 2022 (https://arxiv.org/abs/2012.15498)
-
+    name = "SQSB"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     len_output = n_epoch * n_rate
     output = init_output(len_output)
-    println("SQSB starts.")
     to = TimerOutput()
 
     d::Int64 = size(ρ_true)[1]
@@ -50,7 +52,7 @@ function SQSB(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/N, fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period)
+            print_output(io, output, iter÷period, verbose)
         end
     end
 
@@ -66,14 +68,16 @@ function SMD(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
 
     # C.-E. Tsai, H.-C. Cheng, and Y.-H. Li, Faster stochastic first-order method for maximum-likelihood quantum state tomography, 2022 (https://arxiv.org/abs/2211.12880)
-
+    name = "SMD"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     len_output = n_epoch * n_rate
     output = init_output(len_output)
-    println("SMD starts.")
     to = TimerOutput()
 
     d::Int64 = size(ρ_true)[1]
@@ -105,7 +109,7 @@ function SMD(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/N, fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period)
+            print_output(io, output, iter÷period, verbose)
         end
     end
 
@@ -121,13 +125,15 @@ function SDA(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
     # working
-
+    name = "SDA (B=1)"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     len_output = n_epoch * n_rate
     output = init_output(len_output)
-    println("SDA starts.")
     to = TimerOutput()
 
     d::Int64 = size(ρ_true)[1]
@@ -138,6 +144,7 @@ function SDA(
     
     n_iter::Int64 = n_epoch * N
     period::Int64 = N ÷ n_rate
+    
     @timeit to "iteration" begin
         idx = rand(1:N, n_iter)  
     end
@@ -166,7 +173,75 @@ function SDA(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/N, fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period)
+            print_output(io, output, iter÷period, verbose)
+        end
+    end
+
+    return output 
+end
+
+
+function minibatch_SDA(
+    n_epoch::Int64, 
+    n_rate::Int64, 
+    io::IOStream, 
+    ρ_true::Array{ComplexF64, 2}, 
+    N::Int64, 
+    f::Function, 
+    ∇f::Function, 
+    compute_λ::Function,
+    verbose
+    )
+    # working
+    name = "SDA (B=d)"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
+    len_output = n_epoch * n_rate
+    output = init_output(len_output)
+    to = TimerOutput()
+
+    d::Int64 = size(ρ_true)[1]
+    ρ_bar::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
+    ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
+    ∑grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
+    ∑dual_norm2 = 0
+    batch_size = d
+    
+    n_iter::Int64 = n_epoch * (N ÷ batch_size)
+    period::Int64 = (N ÷ batch_size) ÷ n_rate
+    
+    @timeit to "iteration" begin
+        idx = rand(1:N, (batch_size, n_iter))  
+    end
+ 
+    @inbounds for iter = 1:n_iter
+        @timeit to "iteration" begin
+            grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
+            @inbounds for j = 1:batch_size
+                grad += - view(data, :, :, idx[j, iter]) / real(view(data, :, :, idx[j, iter]) ⋅ ρ_bar)
+            end
+            grad /= batch_size
+
+            # compute learning rates
+            ∑dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
+            η = sqrt(d) / sqrt(4 * d + 1 + ∑dual_norm2)
+            
+            # update step
+            ∑grad += grad
+            Λ_inv, U = eigen(Hermitian(η * ∑grad))
+            
+            # projection step
+            Λ = log_barrier_projection(1 ./ Λ_inv, 1e-5)
+            ρ = U * Diagonal(Λ) * adjoint(U)
+
+            ρ_bar = (iter * ρ_bar + ρ) / (iter + 1.0)
+        end
+
+        if mod(iter, period) == 0
+            λ = compute_λ(ρ_bar)
+            update_output!(output, iter÷period, iter/(N÷batch_size), fidelity(ρ_true, ρ_bar), f(λ),
+                            TimerOutputs.time(to["iteration"]) * 1e-9)
+            print_output(io, output, iter÷period, verbose)
         end
     end
 

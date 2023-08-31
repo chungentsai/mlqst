@@ -13,12 +13,14 @@ function RρR(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
     # A. I. Lvovsky, Iterative maximum-likelihood reconstruction in quan- tum homodyne tomography, 2004 (https://arxiv.org/abs/quant-ph/0311097)
-
+    name = "RρR"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
-    println("RρR starts.")
     to = TimerOutput()
 
 
@@ -38,7 +40,7 @@ function RρR(
 
         update_output!(output, t, t, fidelity(ρ_true, ρ), f(λ),
                        TimerOutputs.time(to["iteration"]) * 1e-9)
-        print_output(io, output, t)
+        print_output(io, output, t, verbose)
     end
 
     return output
@@ -53,12 +55,14 @@ function QEM(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
     # C.-M. Lin, H.-C. Cheng, and Y.-H. Li, Maximum-likelihood quantum state tomography by Cover's method with non-asymptotic analysis, 2022 (https://arxiv.org/abs/2110.00747)
-
+    name = "QEM"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
-    println("QEM starts.")
     to = TimerOutput()
 
     d::Int64 = size(ρ_true)[1]
@@ -78,7 +82,7 @@ function QEM(
 
         update_output!(output, t, t, fidelity(ρ_true, ρ), f(λ),
                        TimerOutputs.time(to["iteration"]) * 1e-9)
-        print_output(io, output, t)
+        print_output(io, output, t, verbose)
     end
 
     return output
@@ -93,12 +97,14 @@ function M_FW(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
     # A. Carderera, M. Besançon, and S. Pokutta, Simple steps are all you need: Frank-Wolfe and generalized self-concordant functions, 2021 (https://proceedings.neurips.cc/paper/2021/hash/2b323d6eb28422cef49b266557dd31ad-Abstract.html)
-
+    name = "MonoFW"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
-    println("M_FW starts.")
     to = TimerOutput()
 
     d::Int64 = size(ρ_true)[1]
@@ -135,7 +141,7 @@ function M_FW(
 
         update_output!(output, t, t, fidelity(ρ_true, ρ), fval,
                        TimerOutputs.time(to["iteration"]) * 1e-9)
-        print_output(io, output, t)
+        print_output(io, output, t, verbose)
     end
 
     return output
@@ -150,15 +156,17 @@ function DA(
     N::Int64, 
     f::Function, 
     ∇f::Function, 
-    compute_λ::Function
+    compute_λ::Function,
+    verbose
     )
-
+    name = "DA"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
-    println("DA starts.")
     to = TimerOutput()
 
     d::Int64 = size(ρ_true)[1]
-    ρ_bar = Matrix{ComplexF64}(I, d, d) / d
+    ρ_bar::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ∑grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
     ∑dual_norm2 = 0
@@ -183,12 +191,12 @@ function DA(
 
             # averaging step
             ρ_bar = (t * ρ_bar + ρ) / (t + 1.0)
-            λ = compute_λ(ρ_bar)
+            λ = compute_λ(ρ_bar)  
         end
 
         update_output!(output, t, t, fidelity(ρ_true, ρ_bar), f(λ),
                        TimerOutputs.time(to["iteration"]) * 1e-9)
-        print_output(io, output, t)
+        print_output(io, output, t, verbose)
     end
 
     return output

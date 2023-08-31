@@ -19,8 +19,10 @@ function update_output!(output, index, t, fid, fval, time)
 end
 
 
-function print_output(io, output, index)
+function print_output(io, output, index, verbose)
     @printf(io, "%.1f\t%E\t%E\t%E\n", output["n_epoch"][index], output["fidelity"][index], output["elapsed_time"][index], output["fval"][index])
-    @printf("%.1f\t%E\t%E\t%E\n", output["n_epoch"][index], output["fidelity"][index], output["elapsed_time"][index], output["fval"][index])
+    if verbose
+        @printf("%.1f\t%E\t%E\t%E\n", output["n_epoch"][index], output["fidelity"][index], output["elapsed_time"][index], output["fval"][index])
+    end
     flush(io)
 end
