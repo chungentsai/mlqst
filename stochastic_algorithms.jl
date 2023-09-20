@@ -60,7 +60,7 @@ function SQSB(
 end
 
 
-function SMD(
+function SQLBOMD(
     n_epoch::Int64, 
     n_rate::Int64, 
     io::IOStream, 
@@ -73,7 +73,7 @@ function SMD(
     )
 
     # C.-E. Tsai, H.-C. Cheng, and Y.-H. Li, Faster stochastic first-order method for maximum-likelihood quantum state tomography, 2022 (https://arxiv.org/abs/2211.12880)
-    name = "SMD"
+    name = "SQLBOMD"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     len_output = n_epoch * n_rate
@@ -117,7 +117,7 @@ function SMD(
 end
 
 
-function SDA(
+function LB_SDA(
     n_epoch::Int64, 
     n_rate::Int64, 
     io::IOStream, 
@@ -129,7 +129,7 @@ function SDA(
     verbose
     )
     # working
-    name = "SDA (B=1)"
+    name = "1-sample LB-SDA"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     len_output = n_epoch * n_rate
@@ -181,7 +181,7 @@ function SDA(
 end
 
 
-function minibatch_SDA(
+function d_sample_LB_SDA(
     n_epoch::Int64, 
     n_rate::Int64, 
     io::IOStream, 
@@ -193,7 +193,7 @@ function minibatch_SDA(
     verbose
     )
     # working
-    name = "SDA (B=d)"
+    name = "d-sample LB-SDA"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     len_output = n_epoch * n_rate

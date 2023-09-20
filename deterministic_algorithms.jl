@@ -201,3 +201,59 @@ function DA(
 
     return output
 end
+
+
+
+function Zhao_FW(
+    n_epoch::Int64, 
+    n_rate::Int64, 
+    io::IOStream, 
+    ρ_true::Array{ComplexF64, 2}, 
+    N::Int64, 
+    f::Function, 
+    ∇f::Function, 
+    compute_λ::Function,
+    verbose
+    )
+    # Renbo Zhao and Robert M. Freund, Analysis of the Frank–Wolfe method for convex composite optimization involving a logarithmically-homogeneous barrier, 2023 (https://link.springer.com/article/10.1007/s10107-022-01820-9)
+    name = "Zhao2023_FW"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
+    output = init_output(n_epoch)
+    to = TimerOutput()
+
+    d::Int64 = size(ρ_true)[1]
+    ρ = Matrix{ComplexF64}(I, d, d) / d    # initialize at the maximally 
+    ρ_prev = Matrix{ComplexF64}(I, d, d) / d
+    λ = zeros(Float64, 1, N)
+    fval = 0
+
+    @timeit to "iteration" λ = compute_λ(ρ)
+    
+    @inbounds for t = 1: n_epoch
+
+        # update iterate
+        @timeit to "iteration" begin
+            grad = ∇f(λ)
+            σ, v   = eigs(-grad, nev = 1, which = :LM)
+            V      = v * v'
+            direction = V - ρ
+
+            G = real(dot(grad, -direction))
+            hess = grad * grad'
+            D = real(dot(direction, hess, direction))^0.5
+            η      = min(G / (D * (G + D)), 1)
+
+            ρ = ρ + η * direction
+
+            λ = compute_λ(ρ) 
+            fval = f(λ)
+        end
+
+        update_output!(output, t, t, fidelity(ρ_true, ρ), fval,
+                       TimerOutputs.time(to["iteration"]) * 1e-9)
+        print_output(io, output, t, verbose)
+    end
+
+    return output
+end
