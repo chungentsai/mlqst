@@ -7,7 +7,7 @@ using Dates
 
 include("./functions.jl")
 include("./utils.jl")
-include("./deterministic_algorithms.jl")
+include("./batch_algorithms.jl")
 include("./stochastic_algorithms.jl")
 include("./settings.jl")
 
@@ -41,7 +41,7 @@ try
         results[alg] = run_alg(alg, N_EPOCH_S, N_RATE_S)
     end
 
-    for alg in deterministic_algs
+    for alg in batch_algs
         results[alg] = run_alg(alg, N_EPOCH_B, N_RATE_B)
     end
 
@@ -51,4 +51,4 @@ finally
 end
 
 
-myPlot(filename)
+#myPlot(filename)

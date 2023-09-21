@@ -204,7 +204,7 @@ end
 
 
 
-function Zhao_FW(
+function FW(
     n_epoch::Int64, 
     n_rate::Int64, 
     io::IOStream, 
@@ -216,7 +216,7 @@ function Zhao_FW(
     verbose
     )
     # Renbo Zhao and Robert M. Freund, Analysis of the Frank–Wolfe method for convex composite optimization involving a logarithmically-homogeneous barrier, 2023 (https://link.springer.com/article/10.1007/s10107-022-01820-9)
-    name = "Zhao2023_FW"
+    name = "FW"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
