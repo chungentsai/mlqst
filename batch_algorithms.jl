@@ -148,6 +148,55 @@ function M_FW(
 end
 
 
+
+function BPG(
+    n_epoch::Int64, 
+    n_rate::Int64, 
+    io::IOStream, 
+    ρ_true::Array{ComplexF64, 2}, 
+    N::Int64, 
+    f::Function, 
+    ∇f::Function, 
+    compute_λ::Function,
+    verbose
+    )
+    # Heinz H. Bauschke, Jérôme Bolte, Marc Teboulle, A Descent Lemma Beyond Lipschitz Gradient Continuity: First-Order Methods Revisited and Applications, 2017 (https://pubsonline.informs.org/doi/abs/10.1287/moor.2016.0817)
+
+    name = "BPG"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
+    output = init_output(n_epoch)
+    to = TimerOutput()
+
+    d::Int64 = size(ρ_true)[1]
+    ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
+    ρ_inv::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) * d
+    η = 1
+
+    @timeit to "iteration" λ = compute_λ(ρ)
+
+    @inbounds for t = 1: n_epoch
+        # update iterate
+        @timeit to "iteration" begin            
+            # update
+            grad::Matrix{ComplexF64} = ∇f(λ)
+            Λ_inv::Array{Float64, 1}, U::Matrix{ComplexF64} = eigen(Hermitian(ρ_inv + η * grad))
+            Λ = log_barrier_projection(1 ./ Λ_inv, 1e-5)
+            ρ = U * Diagonal(Λ) * adjoint(U)
+            ρ_inv = U * Diagonal(1 ./ Λ) * adjoint(U)
+
+            λ = compute_λ(ρ)  
+        end
+
+        update_output!(output, t, t, fidelity(ρ_true, ρ), f(λ),
+                       TimerOutputs.time(to["iteration"]) * 1e-9)
+        print_output(io, output, t, verbose)
+    end
+
+    return output
+end
+
+
 function DA(
     n_epoch::Int64, 
     n_rate::Int64, 
@@ -216,7 +265,7 @@ function FW(
     verbose
     )
     # Renbo Zhao and Robert M. Freund, Analysis of the Frank–Wolfe method for convex composite optimization involving a logarithmically-homogeneous barrier, 2023 (https://link.springer.com/article/10.1007/s10107-022-01820-9)
-    name = "FW"
+    name = "Frank-Wolfe"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
@@ -240,7 +289,8 @@ function FW(
             direction = V - ρ
 
             G = real(dot(grad, -direction))
-            hess = grad * grad'
+
+            hess = grad * grad
             D = real(dot(direction, hess, direction))^0.5
             η      = min(G / (D * (G + D)), 1)
 
