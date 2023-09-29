@@ -17,7 +17,7 @@ function RρR(
     verbose
     )
     # A. I. Lvovsky, Iterative maximum-likelihood reconstruction in quan- tum homodyne tomography, 2004 (https://arxiv.org/abs/quant-ph/0311097)
-    name = "Iterative MLE"
+    name = "iMLE"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
@@ -358,6 +358,73 @@ function EMD(
             while τ*real(grad ⋅ (ρα - ρ)) + fval < f(compute_λ(ρα)) && round < 10
                 α *= r
                 ρα = exp(log(ρ) - α*grad)
+                ρα /= tr(ρα)
+                round += 1
+            end
+            if round < 10
+                ρ = ρα
+            else
+                ρ = ρ
+            end
+            λ = compute_λ(ρ)
+            fval = f(λ)
+        end
+
+        update_output!(output, t, t, fidelity(ρ_true, ρ), fval,
+                       TimerOutputs.time(to["iteration"]) * 1e-9)
+        print_output(io, output, t, verbose)
+    end
+
+    return output
+end
+
+
+
+function diluted_RρR(
+    n_epoch::Int64, 
+    n_rate::Int64, 
+    io::IOStream, 
+    ρ_true::Array{ComplexF64, 2}, 
+    N::Int64, 
+    f::Function, 
+    ∇f::Function, 
+    compute_λ::Function,
+    verbose
+    )
+    # D. S. Gonçalves, M. A. Gomes-Ruggiero, C. Lavor, Global convergence of diluted iterations in maximum-likelihood quantum tomography, 2013 (https://arxiv.org/abs/1306.3057)
+    name = "Diluted iMLE"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
+    output = init_output(n_epoch)
+    to = TimerOutput()
+
+
+    d::Int64 = size(ρ_true)[1]
+    ρ = Matrix{ComplexF64}(I, d, d) / d    # initialize at the maximally
+    α0 = 1
+
+    @timeit to "iteration" begin
+        λ = compute_λ(ρ)
+        fval = f(λ)
+    end
+
+    @inbounds for t = 1: n_epoch
+        @timeit to "iteration" begin
+            grad = ∇f(λ)
+            τ = 1e-4
+            r = 0.5
+            
+            # Armijo line search
+            α = α0
+            temp = (Matrix{ComplexF64}(I, d, d) - α*grad) / (1+α)
+            ρα = temp * ρ * temp
+            ρα /= tr(ρα)
+
+            round = 0
+            while τ*real(grad ⋅ (ρα - ρ)) + fval < f(compute_λ(ρα)) && round < 10
+                α *= r
+                temp = (Matrix{ComplexF64}(I, d, d) - α*grad) / (1+α)
+                ρα = temp * ρ * temp
                 ρα /= tr(ρα)
                 round += 1
             end
