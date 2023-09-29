@@ -18,5 +18,5 @@ const VERBOSE = false
 # stochastic algorithms: d_sample_LB_SDA, LB_SDA, SQLBOMD, SQSB
 # batch algorithms: DA, BPG, QEM, RρR, FW, EMD
 
-batch_algs = [BPG, QEM, FW, EMD, RρR, diluted_RρR]
+batch_algs = [BPG, QEM, FW, EMD, diluted_RρR]
 stochastic_algs = [SQSB, SQLBOMD, LB_SDA, d_sample_LB_SDA]

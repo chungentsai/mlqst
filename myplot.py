@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from itertools import cycle
 
 markers = [
-     "+", "1", "x", "*", "P", "v", "^"
+     "+", "1", "x", "*", "P", "v", "^", "<", ">", "D"
      ]
 markers = cycle(markers)
 
@@ -58,6 +58,7 @@ def read_records(filename):
 
 def main():
     results = read_records(filename)
+    algs= results.keys()
 
     directory = filename.replace("records", "figures") + "/"
     if not os.path.isdir(directory):
@@ -65,47 +66,49 @@ def main():
 
     plt.figure(1)
     plt.grid(True, which="both", linestyle='--', alpha=0.4)
-    algs = ["BPG", "QEM", "SQSB", "Frank-Wolfe", "SQLBOMD", "d-sample LB-SDA", "1-sample LB-SDA"]
+    #algs = ["BPG", "QEM", "SQSB", "Frank-Wolfe", "SQLBOMD", "d-sample LB-SDA", "1-sample LB-SDA"]
     for alg_name in algs:
         plt.semilogy(results[alg_name]["n_epoch"], results[alg_name]["opt_error"], label=alg_name, marker=results[alg_name]["marker"], markevery=0.1, linewidth=1, color=results[alg_name]["linecolor"])
         plt.xlabel("Number of epochs")
         plt.ylabel("Approximate optimization error")
         plt.xlim((0, 200))
-        plt.ylim((1e-5,  1e-2))
+        plt.ylim((1e-5,  1e-1))
     plt.legend()
     plt.savefig(directory + "epoch-error.png", dpi=300)
 
     plt.figure(2)
     plt.grid(True, which="both", linestyle='--', alpha=0.4)
-    algs = ["1-sample LB-SDA", "d-sample LB-SDA", "SQLBOMD", "Frank-Wolfe", "SQSB", "QEM", "BPG"]
+    #algs = ["1-sample LB-SDA", "d-sample LB-SDA", "SQLBOMD", "Frank-Wolfe", "SQSB", "QEM", "BPG"]
     for alg_name in algs:
         plt.plot(results[alg_name]["n_epoch"], results[alg_name]["fidelity"], label=alg_name, marker=results[alg_name]["marker"], markevery=0.1, linewidth=1, color=results[alg_name]["linecolor"])
         plt.xlabel("Number of epochs")
         plt.ylabel("Fidelity")
         plt.xlim((0, 200))
+        plt.ylim((0.5,  1))
     plt.legend()
     plt.savefig(directory + "epoch-fidelity.png", dpi=300)
 
     plt.figure(3)
     plt.grid(True, which="both", linestyle='--', alpha=0.4)
-    algs = ["BPG", "SQSB", "SQLBOMD", "QEM", "1-sample LB-SDA", "d-sample LB-SDA", "Frank-Wolfe"]
+    #algs = ["BPG", "SQSB", "SQLBOMD", "QEM", "1-sample LB-SDA", "d-sample LB-SDA", "Frank-Wolfe"]
     for alg_name in algs:
         plt.loglog(results[alg_name]["elapsed_time"], results[alg_name]["opt_error"], label=alg_name, marker=results[alg_name]["marker"], markevery=0.1, linewidth=1, color=results[alg_name]["linecolor"])
         plt.xlabel("Elapsed time")
         plt.ylabel("Approximate optimization error")
-        plt.xlim((1e1, 3e5))
-        plt.ylim((1e-5,  1e-2))
+        #plt.xlim((1e1, 3e5))
+        plt.ylim((1e-5,  1e-1))
     plt.legend()
     plt.savefig(directory + "time-error.png", dpi=300)
 
     plt.figure(4)
     plt.grid(True, which="both", linestyle='--', alpha=0.4)
-    algs = ["d-sample LB-SDA", "Frank-Wolfe", "1-sample LB-SDA", "QEM", "SQLBOMD", "SQSB", "BPG"]
+    #algs = ["d-sample LB-SDA", "Frank-Wolfe", "1-sample LB-SDA", "QEM", "SQLBOMD", "SQSB", "BPG"]
     for alg_name in algs:
         plt.semilogx(results[alg_name]["elapsed_time"], results[alg_name]["fidelity"], label=alg_name, marker=results[alg_name]["marker"], markevery=0.1, linewidth=1, color=results[alg_name]["linecolor"])
         plt.xlabel("Elapsed time")
         plt.ylabel("Fidelity")
-        plt.xlim((1e1, 3e5))
+        #plt.xlim((1e1, 3e5))
+        plt.ylim((0.5,  1))
     plt.legend()
     plt.savefig(directory + "time-fidelity.png", dpi=300)
 
