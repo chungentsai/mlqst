@@ -41,7 +41,7 @@ function SQSB(
     @inbounds for iter = 1:n_iter
         @timeit to "iteration" begin
             # update
-            grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ_bar)
+            grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ)
             ρ = exp(log(ρ) + log(σ - η * grad))
             ρ /= tr(ρ)
             
@@ -96,7 +96,7 @@ function SQLBOMD(
     @inbounds for iter = 1:n_iter
         @timeit to "iteration" begin
             # update
-            grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ_bar)
+            grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ)
             Λ_inv::Array{Float64, 1}, U::Matrix{ComplexF64} = eigen(Hermitian(ρ_inv + η * grad))
             Λ = log_barrier_projection(1 ./ Λ_inv, 1e-5)
             ρ = U * Diagonal(Λ) * adjoint(U)
@@ -155,7 +155,7 @@ function LB_SDA(
             grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ_bar)
 
             # compute learning rates
-            ∑dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
+            ∑dual_norm2 += dual_norm2(ρ, grad + α(ρ, grad) * Matrix{ComplexF64}(I, d, d))
             η = sqrt(d) / sqrt(4 * d + 1 + ∑dual_norm2)
             
             # update step
@@ -223,7 +223,7 @@ function d_sample_LB_SDA(
             grad /= batch_size
 
             # compute learning rates
-            ∑dual_norm2 += dual_norm2(ρ_bar, grad + α(ρ_bar, grad) * Matrix{ComplexF64}(I, d, d))
+            ∑dual_norm2 += dual_norm2(ρ, grad + α(ρ, grad) * Matrix{ComplexF64}(I, d, d))
             η = sqrt(d) / sqrt(4 * d + 1 + ∑dual_norm2)
             
             # update step

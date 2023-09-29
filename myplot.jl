@@ -3,10 +3,10 @@ using DelimitedFiles
 
 
 function myPlot(filename, N_EPOCH = 200)
-    rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
-    rcParams["figure.dpi"] = 300
-    rcParams["font.size"] = 15
-    rcParams["legend.fontsize"] = 15
+    #rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
+    #rcParams["figure.dpi"] = 300
+    #rcParams["font.size"] = 15
+    #rcParams["legend.fontsize"] = 15
 
     A = readdlm(filename, '\t', Any, '\n')
     n_line = size(A)[1]
@@ -45,7 +45,6 @@ function myPlot(filename, N_EPOCH = 200)
     xlabel("Number of Epochs")
     ylabel("Fidelity")
     xlim([0, N_EPOCH])
-    ylim([0, 1])
     grid("on")
     savefig(path * "/epoch-fidelity.png")
 
@@ -59,7 +58,6 @@ function myPlot(filename, N_EPOCH = 200)
     xlabel("Number of epochs")
     ylabel("Approximate optimization error")
     xlim([0, N_EPOCH])
-    #ylim([1e-6, 1e-2])
     grid("on")
     savefig(path * "/epoch-error.png")
 
@@ -72,8 +70,6 @@ function myPlot(filename, N_EPOCH = 200)
     legend(algs)
     xlabel("Elapsed time (seconds)")
     ylabel("Fidelity")
-    #xlim([1, 3*1e5])
-    ylim([0, 1])
     grid("on")
     savefig(path * "/time-fidelity.png")
 
@@ -86,8 +82,6 @@ function myPlot(filename, N_EPOCH = 200)
     legend(algs)
     xlabel("Elapsed time (seconds)")
     ylabel("Approximate optimization error")
-    #xlim([1, 3*1e5])
-    #ylim([1e-6, 1e-2])
     grid("on")
     savefig(path * "/time-error.png")
 

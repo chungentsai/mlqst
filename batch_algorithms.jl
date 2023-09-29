@@ -17,7 +17,7 @@ function RρR(
     verbose
     )
     # A. I. Lvovsky, Iterative maximum-likelihood reconstruction in quan- tum homodyne tomography, 2004 (https://arxiv.org/abs/quant-ph/0311097)
-    name = "RρR"
+    name = "Iterative MLE"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
     output = init_output(n_epoch)
@@ -273,7 +273,6 @@ function FW(
 
     d::Int64 = size(ρ_true)[1]
     ρ = Matrix{ComplexF64}(I, d, d) / d    # initialize at the maximally 
-    ρ_prev = Matrix{ComplexF64}(I, d, d) / d
     λ = zeros(Float64, 1, N)
     fval = 0
 
@@ -283,20 +282,91 @@ function FW(
 
         # update iterate
         @timeit to "iteration" begin
-            grad = ∇f(λ)
+            
+            grad = zeros(ComplexF64, d, d)
+            hess = zeros(ComplexF64, d, d)
+            @inbounds for i in 1: N
+                temp = view(data, :, :, i) ./ view(λ, i)
+                grad -= temp
+                hess += temp * temp 
+            end
+
             σ, v   = eigs(-grad, nev = 1, which = :LM)
             V      = v * v'
             direction = V - ρ
 
             G = real(dot(grad, -direction))
-
-            hess = grad * grad
             D = real(dot(direction, hess, direction))^0.5
             η      = min(G / (D * (G + D)), 1)
 
             ρ = ρ + η * direction
 
             λ = compute_λ(ρ) 
+            fval = f(λ)
+        end
+
+        update_output!(output, t, t, fidelity(ρ_true, ρ), fval,
+                       TimerOutputs.time(to["iteration"]) * 1e-9)
+        print_output(io, output, t, verbose)
+    end
+
+    return output
+end
+
+
+function EMD(
+    n_epoch::Int64, 
+    n_rate::Int64, 
+    io::IOStream, 
+    ρ_true::Array{ComplexF64, 2}, 
+    N::Int64, 
+    f::Function, 
+    ∇f::Function, 
+    compute_λ::Function,
+    verbose
+    )
+
+    name = "EMD"
+    println(name * " starts.")
+    @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
+    output = init_output(n_epoch)
+    to = TimerOutput()
+
+    # Yen-Huan Li, Carlos A. Riofrio, Volkan Cevher, "A General Convergence Result for Mirror Descent with Armijo Line Search", 2018 (https://arxiv.org/abs/1805.12232)
+
+    d::Int64 = size(ρ_true)[1]
+    ρ = Matrix{ComplexF64}(I, d, d) / d    # initialize at the maximally 
+    @timeit to "iteration" begin
+        λ = compute_λ(ρ)
+        fval = f(λ)
+    end
+    α0 = 10
+    r = 0.5
+    τ = 0.5
+
+    @inbounds for t = 1: n_epoch
+        # update iterate
+        @timeit to "iteration" begin
+            grad = ∇f(λ)
+            
+            # Armijo line search
+            α = α0
+            ρα = exp(log(ρ) - α*grad)
+            ρα /= tr(ρα)
+ 
+            round = 0
+            while τ*real(grad ⋅ (ρα - ρ)) + fval < f(compute_λ(ρα)) && round < 10
+                α *= r
+                ρα = exp(log(ρ) - α*grad)
+                ρα /= tr(ρα)
+                round += 1
+            end
+            if round < 10
+                ρ = ρα
+            else
+                ρ = ρ
+            end
+            λ = compute_λ(ρ)
             fval = f(λ)
         end
 
