@@ -5,13 +5,16 @@ using TimerOutputs;
 using Random
 using Dates
 
+
 include("./functions.jl")
 include("./utils.jl")
 include("./batch_algorithms.jl")
 include("./stochastic_algorithms.jl")
 include("./settings.jl")
 
+
 BLAS.set_num_threads(8);
+
 
 mkpath("./records")
 const filename = "./records/" * Dates.format(now(), "yyyy-mm-dd-HH-MM-SS")
@@ -19,6 +22,7 @@ const io       = open(filename, "a")
 
 const to = TimerOutput();
 reset_timer!(to)
+
 
 @timeit to "Setup" begin
     const ρ_true = w_state(q) # true density matrix
@@ -31,7 +35,7 @@ end
 
 ∇f(λ) = ∇f(data, λ)
 compute_λ(ρ) = compute_λ(data, ρ)
-run_alg(alg, n_epoch, n_rate) = alg(n_epoch, n_rate, io, ρ_true, N, f, ∇f, compute_λ, VERBOSE)
+run_alg(alg, n_epoch, n_rate) = alg(n_epoch, n_rate)
 
 
 try

@@ -5,19 +5,7 @@ using Printf
 using LinearAlgebra
 
 
-function SQSB(
-    n_epoch::Int64, 
-    n_rate::Int64, 
-    io::IOStream, 
-    ρ_true::Array{ComplexF64, 2}, 
-    N::Int64, 
-    f::Function, 
-    ∇f::Function, 
-    compute_λ::Function,
-    verbose
-    )
-
-    # C.-M. Lin, Y.-M. Hsu, and Y.-H. Li, Maximum-likelihood quantum state tomography by Soft-Bayes, 2022 (https://arxiv.org/abs/2012.15498)
+function SQSB(n_epoch::Int64, n_rate::Int64)
     name = "SQSB"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
@@ -40,7 +28,6 @@ function SQSB(
  
     @inbounds for iter = 1:n_iter
         @timeit to "iteration" begin
-            # update
             grad::Matrix{ComplexF64} = - view(data, :, :, idx[iter]) / real(view(data, :, :, idx[iter]) ⋅ ρ)
             ρ = exp(log(ρ) + log(σ - η * grad))
             ρ /= tr(ρ)
@@ -52,7 +39,7 @@ function SQSB(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/N, fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period, verbose)
+            print_output(io, output, iter÷period, VERBOSE)
         end
     end
 
@@ -60,17 +47,7 @@ function SQSB(
 end
 
 
-function SQLBOMD(
-    n_epoch::Int64, 
-    n_rate::Int64, 
-    io::IOStream, 
-    ρ_true::Array{ComplexF64, 2}, 
-    N::Int64, 
-    f::Function, 
-    ∇f::Function, 
-    compute_λ::Function,
-    verbose
-    )
+function SQLBOMD(n_epoch::Int64, n_rate::Int64)
 
     # C.-E. Tsai, H.-C. Cheng, and Y.-H. Li, Faster stochastic first-order method for maximum-likelihood quantum state tomography, 2022 (https://arxiv.org/abs/2211.12880)
     name = "SQLBOMD"
@@ -109,7 +86,7 @@ function SQLBOMD(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/N, fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period, verbose)
+            print_output(io, output, iter÷period, VERBOSE)
         end
     end
 
@@ -117,18 +94,7 @@ function SQLBOMD(
 end
 
 
-function LB_SDA(
-    n_epoch::Int64, 
-    n_rate::Int64, 
-    io::IOStream, 
-    ρ_true::Array{ComplexF64, 2}, 
-    N::Int64, 
-    f::Function, 
-    ∇f::Function, 
-    compute_λ::Function,
-    verbose
-    )
-    # working
+function LB_SDA(n_epoch::Int64, n_rate::Int64)
     name = "1-sample LB-SDA"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
@@ -140,7 +106,7 @@ function LB_SDA(
     ρ_bar::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ∑grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
-    ∑dual_norm2 = 0
+    ∑dual_norm2::Float64 = 0
     
     n_iter::Int64 = n_epoch * N
     period::Int64 = N ÷ n_rate
@@ -173,7 +139,7 @@ function LB_SDA(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/N, fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period, verbose)
+            print_output(io, output, iter÷period, VERBOSE)
         end
     end
 
@@ -181,18 +147,7 @@ function LB_SDA(
 end
 
 
-function d_sample_LB_SDA(
-    n_epoch::Int64, 
-    n_rate::Int64, 
-    io::IOStream, 
-    ρ_true::Array{ComplexF64, 2}, 
-    N::Int64, 
-    f::Function, 
-    ∇f::Function, 
-    compute_λ::Function,
-    verbose
-    )
-    # working
+function d_sample_LB_SDA(n_epoch::Int64, n_rate::Int64)
     name = "d-sample LB-SDA"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
@@ -204,8 +159,8 @@ function d_sample_LB_SDA(
     ρ_bar::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ρ::Matrix{ComplexF64} = Matrix{ComplexF64}(I, d, d) / d
     ∑grad::Matrix{ComplexF64} = zeros(ComplexF64, d, d)
-    ∑dual_norm2 = 0
-    batch_size = d
+    ∑dual_norm2::Float64 = 0
+    batch_size::Int64 = d
     
     n_iter::Int64 = n_epoch * (N ÷ batch_size)
     period::Int64 = (N ÷ batch_size) ÷ n_rate
@@ -241,7 +196,7 @@ function d_sample_LB_SDA(
             λ = compute_λ(ρ_bar)
             update_output!(output, iter÷period, iter/(N÷batch_size), fidelity(ρ_true, ρ_bar), f(λ),
                             TimerOutputs.time(to["iteration"]) * 1e-9)
-            print_output(io, output, iter÷period, verbose)
+            print_output(io, output, iter÷period, VERBOSE)
         end
     end
 

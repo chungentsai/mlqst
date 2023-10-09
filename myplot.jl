@@ -3,11 +3,6 @@ using DelimitedFiles
 
 
 function myPlot(filename, N_EPOCH = 200)
-    #rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
-    #rcParams["figure.dpi"] = 300
-    #rcParams["font.size"] = 15
-    #rcParams["legend.fontsize"] = 15
-
     A = readdlm(filename, '\t', Any, '\n')
     n_line = size(A)[1]
     algs = String[]
