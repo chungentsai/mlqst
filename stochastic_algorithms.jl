@@ -48,8 +48,6 @@ end
 
 
 function SQLBOMD(n_epoch::Int64, n_rate::Int64)
-
-    # C.-E. Tsai, H.-C. Cheng, and Y.-H. Li, Faster stochastic first-order method for maximum-likelihood quantum state tomography, 2022 (https://arxiv.org/abs/2211.12880)
     name = "SQLBOMD"
     println(name * " starts.")
     @printf(io, "%s\n%d\n%d\n", name, n_epoch, n_rate)
