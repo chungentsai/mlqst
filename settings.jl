@@ -12,5 +12,5 @@ const d = 2 ^ q           # dimension
 const VERBOSE = false
 
 # algorithms settings
-batch_algs = [BPG, QEM, FW, EMD, iMLE, diluted_iMLE]
+batch_algs = [NoLips, QEM, FW, EMD, iMLE, diluted_iMLE]
 stochastic_algs = [SQSB, SQLBOMD, LB_SDA, d_sample_LB_SDA]
