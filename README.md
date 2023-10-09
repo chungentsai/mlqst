@@ -26,4 +26,4 @@ $ julia ./main.jl
 1. Stochastic Q-Soft-Bayes: Chien-Ming Lin, Yu-Ming Hsu, and Yen-Huan Li, Maximum-likelihood quantum state tomography by Soft-Bayes, *arXiv preprint*, 2022 ([link](https://arxiv.org/abs/2012.15498))
 2. Stochastic Q-LB-OMD: Chung-En Tsai, Hao-Chung Cheng, and Yen-Huan Li, Faster stochastic first-order method for maximum-likelihood quantum state tomography, *arXiv preprint*, 2022 ([link](https://arxiv.org/abs/2211.12880))
 3. 1-sample LB-SDA: **this work**
-4. $d$-sample LB-SDA: **this work
+4. $d$-sample LB-SDA: **this work**
